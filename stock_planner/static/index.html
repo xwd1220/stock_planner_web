@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>股票交易计划工具 V1</title>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --panel: #fffaf2;
+      --line: #d7c7aa;
+      --text: #2f2419;
+      --muted: #7b6a58;
+      --accent: #a74a2a;
+      --accent-2: #1f6f78;
+      --ok: #215732;
+      --warn: #9a5a00;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(167, 74, 42, 0.08), transparent 24rem),
+        radial-gradient(circle at bottom right, rgba(31, 111, 120, 0.08), transparent 20rem),
+        var(--bg);
+      color: var(--text);
+    }
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      line-height: 1.1;
+    }
+    .lead {
+      margin: 0 0 28px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 18px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(47, 36, 25, 0.06);
+    }
+    .panel-wide {
+      grid-column: 1 / -1;
+    }
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+    }
+    .subgrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .symbol-panel .form-grid {
+      grid-template-columns: minmax(180px, 1.1fr) minmax(220px, 1.4fr) minmax(140px, 0.8fr) minmax(120px, 0.7fr);
+      align-items: end;
+    }
+    .symbol-footer {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.2fr) minmax(220px, 0.8fr);
+      gap: 14px;
+      margin-top: 14px;
+      align-items: start;
+    }
+    .symbol-note textarea {
+      min-height: 84px;
+    }
+    .symbol-side {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 100%;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    input, select, textarea, button {
+      font: inherit;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--text);
+    }
+    textarea {
+      min-height: 88px;
+      resize: vertical;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: transform .15s ease, opacity .15s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      opacity: .95;
+    }
+    .primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .secondary {
+      background: var(--accent-2);
+      color: #fff;
+    }
+    .ghost {
+      background: #efe4d2;
+      color: var(--text);
+    }
+    .meta {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .message {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      display: none;
+    }
+    .message.show {
+      display: block;
+    }
+    .message.ok {
+      background: rgba(33, 87, 50, 0.08);
+      color: var(--ok);
+    }
+    .message.warn {
+      background: rgba(154, 90, 0, 0.10);
+      color: var(--warn);
+    }
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+      font-size: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid #eadfcf;
+      padding: 10px 12px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    th:first-child, td:first-child {
+      text-align: left;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .summary-item {
+      border: 1px solid #eadfcf;
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+    .summary-item strong {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .summary-item span {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .history-list {
+      display: grid;
+      gap: 10px;
+    }
+    .history-card {
+      border: 1px solid #eadfcf;
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+    .history-card strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+    .history-card small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .history-card .ghost {
+      padding: 8px 14px;
+    }
+    .empty {
+      color: var(--muted);
+      font-size: 14px;
+      padding: 8px 0;
+    }
+    code {
+      background: rgba(47, 36, 25, 0.06);
+      padding: 1px 5px;
+      border-radius: 6px;
+    }
+    @media (max-width: 720px) {
+      .page { padding: 20px 14px 36px; }
+      h1 { font-size: 28px; }
+      .panel { padding: 16px; }
+    }
+    @media (max-width: 980px) {
+      .symbol-panel .form-grid,
+      .symbol-footer {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>股票交易计划工具 V1</h1>
+    <p class="lead">当前版本支持标的配置、买入计划生成器、卖出计划生成器、计划保存和历史查看。频率请输入小数，例如 <code>0.05</code> 表示 5%。</p>
+
+    <div class="grid">
+      <section class="panel panel-wide symbol-panel">
+        <h2>标的配置</h2>
+        <div class="form-grid">
+          <label>标的代码
+            <input id="symbolCode" placeholder="NVDA">
+          </label>
+          <label>标的名称
+            <input id="symbolName" placeholder="NVIDIA">
+          </label>
+          <label>标的类型
+            <select id="assetType">
+              <option value="stock">个股</option>
+              <option value="etf">ETF</option>
+            </select>
+          </label>
+          <label>币种
+            <input id="currency" value="USD">
+          </label>
+        </div>
+        <div class="symbol-footer">
+          <label class="symbol-note">备注
+            <textarea id="symbolNotes" placeholder="可填写投资逻辑、策略备注等"></textarea>
+          </label>
+          <div class="symbol-side">
+            <div class="actions" style="margin-top:0;">
+              <button class="primary" id="saveSymbolBtn">保存标的</button>
+              <button class="ghost" id="refreshSymbolsBtn">刷新列表</button>
+            </div>
+            <div class="meta" id="symbolMeta">当前未加载标的。</div>
+            <div class="message" id="symbolMessage"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel-wide">
+        <h2>买入计划生成器</h2>
+        <div class="form-grid">
+          <label>标的代码
+            <input id="buySymbolCode" placeholder="NVDA">
+          </label>
+          <label>初始买入价格
+            <input id="buyInitialPrice" type="number" step="0.01" value="100">
+          </label>
+          <label>计划资金
+            <input id="buyPlannedCapital" type="number" step="0.01" value="500000">
+          </label>
+          <label>买入频率
+            <input id="buyFrequency" type="number" step="0.0001" value="0.05">
+          </label>
+          <label>买入次数
+            <input id="buyCount" type="number" step="1" value="6">
+          </label>
+          <label>首单数量
+            <input id="buyBaseQuantity" type="number" step="1" value="200">
+          </label>
+          <label style="grid-column: 1 / -1;">买单倍数
+            <input id="buyMultipliers" value="1,1,1.5,1.5,2,2">
+          </label>
+        </div>
+        <div class="actions">
+          <button class="primary" id="calcBuyBtn">计算买入计划</button>
+          <button class="ghost" id="saveBuyBtn">保存买入计划</button>
+        </div>
+        <div class="message" id="buyMessage"></div>
+        <div id="buySummary" class="summary"></div>
+        <div class="table-wrap" id="buyTableWrap"></div>
+      </section>
+
+      <section class="panel panel-wide">
+        <h2>卖出计划生成器</h2>
+        <div class="form-grid">
+          <label>标的代码
+            <input id="sellSymbolCode" placeholder="NVDA">
+          </label>
+          <label>持仓成本
+            <input id="sellAverageCost" type="number" step="0.01" value="72.52">
+          </label>
+          <label>总持仓数量
+            <input id="sellTotalQuantity" type="number" step="1" value="5575">
+          </label>
+          <label>计划卖出数量
+            <input id="sellIntendedQuantity" type="number" step="1" value="1673">
+          </label>
+          <label>目标回收资金
+            <input id="sellTargetRecovery" type="number" step="0.01" value="404282.75">
+          </label>
+          <label>初始卖出价格
+            <input id="sellInitialPrice" type="number" step="0.01" value="94.28">
+          </label>
+          <label>初始执行价格
+            <input id="sellInitialExecutionPrice" type="number" step="0.01" value="157.19">
+          </label>
+          <label>卖出频率
+            <input id="sellFrequency" type="number" step="0.0001" value="0.30">
+          </label>
+          <label>卖出次数
+            <input id="sellCount" type="number" step="1" value="4">
+          </label>
+          <label style="grid-column: 1 / -1;">卖单倍数
+            <input id="sellMultipliers" value="2,3,3,2">
+          </label>
+        </div>
+        <div class="actions">
+          <button class="secondary" id="calcSellBtn">计算卖出计划</button>
+          <button class="ghost" id="saveSellBtn">保存卖出计划</button>
+        </div>
+        <div class="message" id="sellMessage"></div>
+        <div id="sellSummary" class="summary"></div>
+        <div class="table-wrap" id="sellTableWrap"></div>
+      </section>
+
+      <section class="panel panel-wide">
+        <h2>历史记录</h2>
+        <div class="actions" style="margin-top:0;">
+          <button class="ghost" id="refreshHistoryBtn">刷新历史记录</button>
+        </div>
+        <div class="subgrid" style="margin-top:14px;">
+          <div>
+            <h3 style="margin:0 0 12px;">买入计划历史</h3>
+            <div id="buyHistory" class="history-list"></div>
+          </div>
+          <div>
+            <h3 style="margin:0 0 12px;">卖出计划历史</h3>
+            <div id="sellHistory" class="history-list"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const byId = (id) => document.getElementById(id);
+    const state = {
+      symbols: [],
+      currentSymbolId: null,
+      lastBuyPlanPayload: null,
+      lastBuyResult: null,
+      lastSellPlanPayload: null,
+      lastSellResult: null
+    };
+
+    function parseNumberList(raw) {
+      return raw
+        .split(",")
+        .map(item => item.trim())
+        .filter(Boolean)
+        .map(Number);
+    }
+
+    function showMessage(targetId, text, type) {
+      const el = byId(targetId);
+      el.textContent = text || "";
+      el.className = "message" + (text ? ` show ${type}` : "");
+    }
+
+    function renderSummary(targetId, items) {
+      byId(targetId).innerHTML = items.map(item => `
+        <div class="summary-item">
+          <strong>${item.label}</strong>
+          <span>${item.value}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderTable(targetId, columns, rows) {
+      if (!rows || !rows.length) {
+        byId(targetId).innerHTML = `<div class="empty">暂无数据。</div>`;
+        return;
+      }
+      const head = columns.map(col => `<th>${col.label}</th>`).join("");
+      const body = rows.map(row => `
+        <tr>
+          ${columns.map(col => `<td>${row[col.key] ?? ""}</td>`).join("")}
+        </tr>
+      `).join("");
+      byId(targetId).innerHTML = `
+        <table>
+          <thead><tr>${head}</tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+      `;
+    }
+
+    function currentSymbolIdByCode(code) {
+      const normalized = (code || "").trim().toUpperCase();
+      const match = state.symbols.find(item => item.symbol_code === normalized);
+      state.currentSymbolId = match ? match.id : null;
+      return state.currentSymbolId;
+    }
+
+    function buildBuyPayload() {
+      return {
+        symbol_code: byId("buySymbolCode").value.trim().toUpperCase(),
+        initial_price: Number(byId("buyInitialPrice").value),
+        planned_capital: Number(byId("buyPlannedCapital").value),
+        buy_frequency_pct: Number(byId("buyFrequency").value),
+        buy_count: Number(byId("buyCount").value),
+        base_quantity: Number(byId("buyBaseQuantity").value),
+        multipliers: parseNumberList(byId("buyMultipliers").value)
+      };
+    }
+
+    function buildSellPayload() {
+      return {
+        symbol_code: byId("sellSymbolCode").value.trim().toUpperCase(),
+        average_cost: Number(byId("sellAverageCost").value),
+        total_position_quantity: Number(byId("sellTotalQuantity").value),
+        intended_sell_quantity: Number(byId("sellIntendedQuantity").value),
+        target_capital_recovery: Number(byId("sellTargetRecovery").value),
+        initial_sell_price: Number(byId("sellInitialPrice").value),
+        initial_capital_plan_price: Number(byId("sellInitialExecutionPrice").value),
+        sell_frequency_pct: Number(byId("sellFrequency").value),
+        sell_count: Number(byId("sellCount").value),
+        multipliers: parseNumberList(byId("sellMultipliers").value)
+      };
+    }
+
+    function applyBuyResult(result, message = "买入计划计算完成。") {
+      const warnings = result.warnings || [];
+      showMessage("buyMessage", warnings.join(" ") || message, warnings.length ? "warn" : "ok");
+      renderSummary("buySummary", [
+        { label: "累计投入资金", value: result.total_capital },
+        { label: "累计买入数量", value: result.total_quantity },
+        { label: "持仓成本", value: result.average_cost },
+        { label: "预算差额", value: result.budget_gap }
+      ]);
+      renderTable("buyTableWrap", [
+        { key: "node_index", label: "节点" },
+        { key: "price", label: "买入价格" },
+        { key: "quantity", label: "买入数量" },
+        { key: "multiplier", label: "倍数" },
+        { key: "capital_used", label: "消耗资金" },
+        { key: "cumulative_capital", label: "累计资金" },
+        { key: "cumulative_quantity", label: "累计数量" },
+        { key: "average_cost", label: "持仓成本" }
+      ], result.nodes || []);
+      byId("sellSymbolCode").value = result.symbol_code || byId("buySymbolCode").value.trim();
+      byId("sellAverageCost").value = result.average_cost;
+      byId("sellTotalQuantity").value = result.total_quantity;
+      state.lastBuyResult = result;
+    }
+
+    function applySellResult(result, message = "卖出计划计算完成。") {
+      const warnings = result.warnings || [];
+      showMessage("sellMessage", warnings.join(" ") || message, warnings.length ? "warn" : "ok");
+      renderSummary("sellSummary", [
+        { label: "总回收资金", value: result.total_recovered_capital },
+        { label: "总计划资金", value: result.total_planned_capital },
+        { label: "剩余持仓", value: result.remaining_quantity },
+        { label: "目标差额", value: result.recovery_gap }
+      ]);
+      renderTable("sellTableWrap", [
+        { key: "node_index", label: "节点" },
+        { key: "sell_price", label: "卖出价格" },
+        { key: "capital_plan_price", label: "执行价格" },
+        { key: "quantity", label: "卖出数量" },
+        { key: "multiplier", label: "倍数" },
+        { key: "recovered_capital", label: "回收资金" },
+        { key: "planned_capital", label: "计划资金" },
+        { key: "cumulative_recovered_capital", label: "累计回收资金" },
+        { key: "remaining_quantity", label: "剩余持仓" }
+      ], result.nodes || []);
+      state.lastSellResult = result;
+    }
+
+    function deriveBuyResultFromSavedPlan(savedPlan) {
+      const nodes = savedPlan.nodes || [];
+      const lastNode = nodes[nodes.length - 1] || {};
+      const plannedCapital = Number(savedPlan.config.planned_capital || 0);
+      const totalCapital = Number(lastNode.cumulative_capital || 0);
+      return {
+        symbol_code: byId("buySymbolCode").value.trim().toUpperCase(),
+        nodes,
+        total_capital: lastNode.cumulative_capital || "0.00",
+        total_quantity: lastNode.cumulative_quantity || "0",
+        average_cost: lastNode.average_cost || "0.00",
+        budget_gap: (plannedCapital - totalCapital).toFixed(2),
+        warnings: totalCapital > plannedCapital ? [`买入计划超出预算 ${(totalCapital - plannedCapital).toFixed(2)} 美元。`] : []
+      };
+    }
+
+    function deriveSellResultFromSavedPlan(savedPlan) {
+      const nodes = savedPlan.nodes || [];
+      const lastNode = nodes[nodes.length - 1] || {};
+      const targetRecovery = Number(savedPlan.config.target_capital_recovery || 0);
+      const totalRecovered = Number(lastNode.cumulative_recovered_capital || 0);
+      const gap = (targetRecovery - totalRecovered).toFixed(2);
+      const warnings = [];
+      if (Number(gap) > 0) {
+        warnings.push(`预计回收资金比目标少 ${gap} 美元。`);
+      } else if (Number(gap) < 0) {
+        warnings.push(`预计回收资金比目标多 ${Math.abs(Number(gap)).toFixed(2)} 美元。`);
+      }
+      return {
+        symbol_code: byId("sellSymbolCode").value.trim().toUpperCase(),
+        nodes,
+        total_recovered_capital: lastNode.cumulative_recovered_capital || "0.00",
+        total_planned_capital: lastNode.cumulative_planned_capital || "0.00",
+        remaining_quantity: lastNode.remaining_quantity || "0",
+        recovery_gap: gap,
+        warnings
+      };
+    }
+
+    function fillBuyFormFromSavedPlan(savedPlan, symbolCode) {
+      const config = savedPlan.config;
+      byId("buySymbolCode").value = symbolCode;
+      byId("buyInitialPrice").value = config.initial_price;
+      byId("buyPlannedCapital").value = config.planned_capital;
+      byId("buyFrequency").value = config.buy_frequency_pct;
+      byId("buyCount").value = config.buy_count;
+      byId("buyBaseQuantity").value = config.base_quantity;
+      byId("buyMultipliers").value = JSON.parse(config.multipliers_json).join(",");
+      state.lastBuyPlanPayload = buildBuyPayload();
+      applyBuyResult(deriveBuyResultFromSavedPlan(savedPlan), `已加载买入历史计划 #${savedPlan.config_id}。`);
+    }
+
+    function fillSellFormFromSavedPlan(savedPlan, symbolCode) {
+      const config = savedPlan.config;
+      byId("sellSymbolCode").value = symbolCode;
+      byId("sellAverageCost").value = config.average_cost;
+      byId("sellTotalQuantity").value = config.total_position_quantity;
+      byId("sellIntendedQuantity").value = config.intended_sell_quantity;
+      byId("sellTargetRecovery").value = config.target_capital_recovery;
+      byId("sellInitialPrice").value = config.initial_sell_price;
+      byId("sellInitialExecutionPrice").value = config.initial_capital_plan_price;
+      byId("sellFrequency").value = config.sell_frequency_pct;
+      byId("sellCount").value = config.sell_count;
+      byId("sellMultipliers").value = JSON.parse(config.multipliers_json).join(",");
+      state.lastSellPlanPayload = buildSellPayload();
+      applySellResult(deriveSellResultFromSavedPlan(savedPlan), `已加载卖出历史计划 #${savedPlan.config_id}。`);
+    }
+
+    async function saveSymbol() {
+      showMessage("symbolMessage", "", "ok");
+      const payload = {
+        symbol_code: byId("symbolCode").value.trim().toUpperCase(),
+        symbol_name: byId("symbolName").value.trim(),
+        asset_type: byId("assetType").value,
+        currency: byId("currency").value.trim() || "USD",
+        notes: byId("symbolNotes").value.trim()
+      };
+      const res = await fetch("/api/symbols", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showMessage("symbolMessage", data.error || "保存失败", "warn");
+        return;
+      }
+      showMessage("symbolMessage", `标的 ${data.symbol_code} 已保存。`, "ok");
+      byId("buySymbolCode").value = data.symbol_code;
+      byId("sellSymbolCode").value = data.symbol_code;
+      state.currentSymbolId = data.id;
+      await loadSymbols();
+      await loadHistory();
+    }
+
+    async function loadSymbols() {
+      const res = await fetch("/api/symbols");
+      const data = await res.json();
+      state.symbols = data.items || [];
+      if (!state.symbols.length) {
+        byId("symbolMeta").textContent = "当前未保存标的。";
+        return;
+      }
+      byId("symbolMeta").textContent = `已保存 ${state.symbols.length} 个标的：` + state.symbols.map(item => `${item.symbol_code}${item.symbol_name ? `(${item.symbol_name})` : ""}`).join("、");
+      currentSymbolIdByCode(byId("buySymbolCode").value || byId("sellSymbolCode").value);
+    }
+
+    async function calculateBuyPlan() {
+      showMessage("buyMessage", "", "ok");
+      const payload = buildBuyPayload();
+      const res = await fetch("/api/buy-plans/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showMessage("buyMessage", data.error || "计算失败", "warn");
+        return;
+      }
+      state.lastBuyPlanPayload = payload;
+      applyBuyResult(data);
+      currentSymbolIdByCode(payload.symbol_code);
+    }
+
+    async function calculateSellPlan() {
+      showMessage("sellMessage", "", "ok");
+      const payload = buildSellPayload();
+      const res = await fetch("/api/sell-plans/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showMessage("sellMessage", data.error || "计算失败", "warn");
+        return;
+      }
+      state.lastSellPlanPayload = payload;
+      applySellResult(data);
+      currentSymbolIdByCode(payload.symbol_code);
+    }
+
+    async function saveBuyPlan() {
+      if (!state.lastBuyPlanPayload) {
+        showMessage("buyMessage", "请先计算买入计划，再执行保存。", "warn");
+        return;
+      }
+      const symbolId = currentSymbolIdByCode(state.lastBuyPlanPayload.symbol_code);
+      if (!symbolId) {
+        showMessage("buyMessage", "请先保存对应标的，再保存买入计划。", "warn");
+        return;
+      }
+      const res = await fetch("/api/buy-plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol_id: symbolId, plan: state.lastBuyPlanPayload })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showMessage("buyMessage", data.error || "保存失败", "warn");
+        return;
+      }
+      showMessage("buyMessage", `买入计划已保存，编号 #${data.config_id}。`, "ok");
+      await loadHistory();
+    }
+
+    async function saveSellPlan() {
+      if (!state.lastSellPlanPayload) {
+        showMessage("sellMessage", "请先计算卖出计划，再执行保存。", "warn");
+        return;
+      }
+      const symbolId = currentSymbolIdByCode(state.lastSellPlanPayload.symbol_code);
+      if (!symbolId) {
+        showMessage("sellMessage", "请先保存对应标的，再保存卖出计划。", "warn");
+        return;
+      }
+      const res = await fetch("/api/sell-plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol_id: symbolId, plan: state.lastSellPlanPayload })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showMessage("sellMessage", data.error || "保存失败", "warn");
+        return;
+      }
+      showMessage("sellMessage", `卖出计划已保存，编号 #${data.config_id}。`, "ok");
+      await loadHistory();
+    }
+
+    function renderHistory(targetId, items, onLoad, formatter) {
+      if (!items.length) {
+        byId(targetId).innerHTML = `<div class="empty">暂无历史记录。</div>`;
+        return;
+      }
+      byId(targetId).innerHTML = items.map(item => `
+        <div class="history-card">
+          <strong>${formatter.title(item)}</strong>
+          <small>${formatter.meta(item)}</small>
+          <button class="ghost" data-target="${targetId}" data-id="${item.config_id}">加载计划</button>
+        </div>
+      `).join("");
+      byId(targetId).querySelectorAll("button[data-id]").forEach(button => {
+        button.addEventListener("click", () => onLoad(Number(button.dataset.id)));
+      });
+    }
+
+    async function loadHistory() {
+      const [buyRes, sellRes] = await Promise.all([
+        fetch("/api/buy-plans"),
+        fetch("/api/sell-plans")
+      ]);
+      const [buyData, sellData] = await Promise.all([buyRes.json(), sellRes.json()]);
+
+      renderHistory("buyHistory", buyData.items || [], loadBuyHistoryDetail, {
+        title: (item) => `${item.symbol_code}${item.symbol_name ? ` (${item.symbol_name})` : ""} · 买入计划 #${item.config_id}`,
+        meta: (item) => `创建时间 ${item.created_at}，首价 ${item.initial_price}，次数 ${item.buy_count}`
+      });
+
+      renderHistory("sellHistory", sellData.items || [], loadSellHistoryDetail, {
+        title: (item) => `${item.symbol_code}${item.symbol_name ? ` (${item.symbol_name})` : ""} · 卖出计划 #${item.config_id}`,
+        meta: (item) => `创建时间 ${item.created_at}，目标回收 ${item.target_capital_recovery}，次数 ${item.sell_count}`
+      });
+    }
+
+    async function loadBuyHistoryDetail(configId) {
+      const listRes = await fetch("/api/buy-plans");
+      const listData = await listRes.json();
+      const summary = (listData.items || []).find(item => Number(item.config_id) === configId);
+      const res = await fetch(`/api/buy-plans/${configId}`);
+      const data = await res.json();
+      if (!res.ok) {
+        showMessage("buyMessage", data.error || "加载历史买入计划失败", "warn");
+        return;
+      }
+      const symbolCode = summary ? summary.symbol_code : byId("buySymbolCode").value.trim().toUpperCase();
+      currentSymbolIdByCode(symbolCode);
+      fillBuyFormFromSavedPlan(data, symbolCode);
+    }
+
+    async function loadSellHistoryDetail(configId) {
+      const listRes = await fetch("/api/sell-plans");
+      const listData = await listRes.json();
+      const summary = (listData.items || []).find(item => Number(item.config_id) === configId);
+      const res = await fetch(`/api/sell-plans/${configId}`);
+      const data = await res.json();
+      if (!res.ok) {
+        showMessage("sellMessage", data.error || "加载历史卖出计划失败", "warn");
+        return;
+      }
+      const symbolCode = summary ? summary.symbol_code : byId("sellSymbolCode").value.trim().toUpperCase();
+      currentSymbolIdByCode(symbolCode);
+      fillSellFormFromSavedPlan(data, symbolCode);
+    }
+
+    byId("saveSymbolBtn").addEventListener("click", saveSymbol);
+    byId("refreshSymbolsBtn").addEventListener("click", loadSymbols);
+    byId("calcBuyBtn").addEventListener("click", calculateBuyPlan);
+    byId("saveBuyBtn").addEventListener("click", saveBuyPlan);
+    byId("calcSellBtn").addEventListener("click", calculateSellPlan);
+    byId("saveSellBtn").addEventListener("click", saveSellPlan);
+    byId("refreshHistoryBtn").addEventListener("click", loadHistory);
+
+    Promise.all([loadSymbols(), loadHistory()]);
+  </script>
+</body>
+</html>
